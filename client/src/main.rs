@@ -1,3 +1,5 @@
+mod socks;
+
 use tokio::net::TcpStream;
 use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 use tokio_util::compat::{TokioAsyncReadCompatExt, FuturesAsyncReadCompatExt};
@@ -5,24 +7,25 @@ use yamux::{Config, Connection, Mode};
 use clap::Parser;
 use log::{info, error};
 
-use client::SOCKClient;
+use socks::SOCKClient;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 const MAGIC_BYTES: [u8; 4] = [0x1b, 0xc3, 0xbd, 0x0f];
 
 #[derive(Parser, Debug)]
+#[command(about = "A reverse SOCKS5 proxy agent")]
 struct Args {
-    #[arg(short, long)]
-    addr: String,
+    #[arg(short = 'o', long, value_name = "HOST", help = "The host to connect to")]
+    host: String,
 
-    #[arg(short, long)]
+    #[arg(short, long, value_name = "PORT", help = "The port to connect to")]
     port: u16,
 
-    #[arg(short, long)]
+    #[arg(short, help = "Use WebSocket for connection")]
     websocket: bool,
 
-    #[arg(short, long)]
+    #[arg(short, help = "Use TLS for connection")]
     tls: bool,
 }
 
@@ -30,9 +33,9 @@ struct Args {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    info!("connecting to {}:{}", args.addr, args.port);
+    info!("connecting to {}:{}", args.host, args.port);
 
-    let stream = TcpStream::connect(format!("{}:{}", args.addr, args.port)).await?;
+    let stream = TcpStream::connect(format!("{}:{}", args.host, args.port)).await?;
 
     connect_to_agent_server(stream).await
 }

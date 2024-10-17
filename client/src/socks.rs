@@ -1,8 +1,7 @@
 #![forbid(unsafe_code)]
-#[macro_use]
-extern crate serde_derive;
-use snafu::Snafu;
 
+use serde_derive::Deserialize;
+use snafu::Snafu;
 use std::io;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::sync::Arc;
@@ -105,16 +104,8 @@ pub enum ResponseCode {
     Success = 0x00,
     #[snafu(display("SOCKS5 Server Failure"))]
     Failure = 0x01,
-    #[snafu(display("SOCKS5 Rule failure"))]
-    RuleFailure = 0x02,
-    #[snafu(display("network unreachable"))]
-    NetworkUnreachable = 0x03,
-    #[snafu(display("host unreachable"))]
-    HostUnreachable = 0x04,
     #[snafu(display("connection refused"))]
     ConnectionRefused = 0x05,
-    #[snafu(display("TTL expired"))]
-    TtlExpired = 0x06,
     #[snafu(display("Command not supported"))]
     CommandNotSupported = 0x07,
     #[snafu(display("Addr Type not supported"))]
@@ -222,11 +213,6 @@ impl<T> SOCKClient<T>
             auth_methods,
             timeout,
         }
-    }
-
-    /// Mutable getter for inner stream
-    pub fn stream_mut(&mut self) -> &mut T {
-        &mut self.stream
     }
 
     /// Check if username + password pair are valid
@@ -341,7 +327,6 @@ impl<T> SOCKClient<T>
         match req.command {
             // Use the Proxy to connect to the specified addr/port
             SockCommand::Connect => {
-
                 let sock_addr = addr_to_socket(&req.addr_type, &req.addr, req.port).await?;
 
                 let time_out = if let Some(time_out) = self.timeout {
