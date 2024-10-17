@@ -12,3 +12,5 @@ snafu = "0.8.5"
 thiserror = "1.0.30"
 tokio-util = { version="0.7.12", features = ["compat"] }
 futures = "0.3.31"
+clap = { version = "4.5.20", features = ["derive"] }
+log = "0.4.22"

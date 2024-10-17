@@ -364,19 +364,19 @@ impl<T> SOCKClient<T>
 
                 match tokio::io::copy_bidirectional(&mut self.stream, &mut target).await {
                     // ignore not connected for shutdown error
-                    Err(e) if e.kind() == std::io::ErrorKind::NotConnected => {
+                    Err(e) if e.kind() == io::ErrorKind::NotConnected => {
                         Ok(0)
                     }
                     Err(e) => Err(MerinoError::Io(e)),
                     Ok((_s_to_t, t_to_s)) => Ok(t_to_s as usize),
                 }
             }
-            SockCommand::Bind => Err(MerinoError::Io(std::io::Error::new(
-                std::io::ErrorKind::Unsupported,
+            SockCommand::Bind => Err(MerinoError::Io(io::Error::new(
+                io::ErrorKind::Unsupported,
                 "Bind not supported",
             ))),
-            SockCommand::UdpAssosiate => Err(MerinoError::Io(std::io::Error::new(
-                std::io::ErrorKind::Unsupported,
+            SockCommand::UdpAssosiate => Err(MerinoError::Io(io::Error::new(
+                io::ErrorKind::Unsupported,
                 "UdpAssosiate not supported",
             ))),
         }
