@@ -34,6 +34,9 @@ var rootCmd = &cobra.Command{
 	Use:   "revsocks",
 	Short: "A reverse SOCKS5 proxy server",
 	Long:  `A server component of the reverse SOCKS5 proxy system that accepts connections from agents.`,
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
+	},
 }
 
 var runCmd = &cobra.Command{
