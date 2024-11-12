@@ -66,3 +66,32 @@ func stopServer() error {
 	client := NewDaemonClient()
 	return client.Shutdown()
 }
+
+func listConnections() error {
+	client := NewDaemonClient()
+	infos, err := client.ListConnections()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("\nActive connections:\n")
+	fmt.Printf("%-10s %-15s %-21s\n", "ID", "IP", "Listen Address")
+	fmt.Printf("%-10s %-15s %-21s\n", "----------", "---------------", "---------------------")
+	for _, info := range infos {
+		fmt.Printf("%-10s %-15s %-21s\n", info.ID, info.IP, info.ListenAddr)
+	}
+	fmt.Println()
+
+	return nil
+}
+
+func closeConnection(id string) error {
+	client := NewDaemonClient()
+	err := client.CloseConnection(id)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Closed connection %s\n", id)
+	return nil
+}

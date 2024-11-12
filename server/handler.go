@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"hash/crc32"
 	"io"
 	"log"
 	"net"
@@ -17,11 +19,19 @@ var (
 	useTor     bool
 )
 
+var connections = make(map[string]*ConnectionHandler)
+
 type ConnectionHandler struct {
 	conn                net.Conn
 	socksClientListener net.Listener
 	session             *yamux.Session
 	healthChan          chan bool
+}
+
+type ConnectionHandlerInfo struct {
+	ID         string `json:"id"`
+	IP         string `json:"ip"`
+	ListenAddr string `json:"listen_addr"`
 }
 
 func copyData(dst, src net.Conn) {
@@ -41,10 +51,12 @@ func copyClientConnToServer(clientConn, serverConn net.Conn) {
 
 func NewConnectionHandler(conn net.Conn) *ConnectionHandler {
 	log.Printf("New connection handler created for connection from %v", conn.RemoteAddr())
-	return &ConnectionHandler{
+	id := generateConnectionID(conn)
+	connections[id] = &ConnectionHandler{
 		conn:       conn,
 		healthChan: make(chan bool),
 	}
+	return connections[id]
 }
 
 func (h *ConnectionHandler) setupListener() error {
@@ -124,6 +136,13 @@ func (h *ConnectionHandler) establishServerConnection(clientConn net.Conn) error
 	return nil
 }
 
+func (h *ConnectionHandler) Close() {
+	delete(connections, generateConnectionID(h.conn))
+	h.session.Close()
+	h.conn.Close()
+	h.socksClientListener.Close()
+}
+
 func handleConnection(conn net.Conn) {
 	log.Printf("Handling new connection from %v", conn.RemoteAddr())
 	handler := NewConnectionHandler(conn)
@@ -167,4 +186,11 @@ func validateMagicBytes(conn net.Conn) error {
 	}
 	log.Printf("Magic bytes validated successfully")
 	return nil
+}
+
+func generateConnectionID(conn net.Conn) string {
+	ip := conn.RemoteAddr()
+	h := crc32.NewIEEE()
+	h.Write([]byte(ip.String()))
+	return fmt.Sprintf("%x", h.Sum32())
 }

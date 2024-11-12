@@ -20,6 +20,8 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(stopCmd)
+	rootCmd.AddCommand(lsCmd)
+	rootCmd.AddCommand(closeCmd)
 }
 
 func main() {
@@ -58,5 +60,23 @@ var stopCmd = &cobra.Command{
 	Long:  `Stop the reverse SOCKS5 proxy server that was started in background mode.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return stopServer()
+	},
+}
+
+var lsCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "List all active connections",
+	Long:  `List all active connections and their IDs.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return listConnections()
+	},
+}
+
+var closeCmd = &cobra.Command{
+	Use:   "close",
+	Short: "Close a connection by ID",
+	Long:  `Close a connection by its ID.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return closeConnection(args[0])
 	},
 }
