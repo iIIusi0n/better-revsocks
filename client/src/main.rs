@@ -14,19 +14,19 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const MAGIC_BYTES: [u8; 4] = [0x1b, 0xc3, 0xbd, 0x0f];
 
 #[derive(Parser, Debug)]
-#[command(about = "A reverse SOCKS5 proxy agent")]
+#[command(about = "a reverse socks5 proxy agent", name = "client")]
 struct Args {
-    #[arg(short = 'o', long, value_name = "HOST", help = "The host to connect to")]
+    #[arg(help = "The host to connect to", value_name = "host")]
     host: String,
 
-    #[arg(short, long, value_name = "PORT", help = "The port to connect to")]
+    #[arg(help = "The port to connect to", value_name = "port")]
     port: u16,
 
-    #[arg(short, help = "Use WebSocket for connection")]
-    websocket: bool,
-
-    #[arg(short, help = "Use TLS for connection")]
+    #[arg(long, help = "Use TLS for connection", value_name = "tls", action = clap::ArgAction::SetFalse)]
     tls: bool,
+
+    #[arg(long, help = "Use Tor for connection", value_name = "tor", action = clap::ArgAction::SetFalse)]
+    tor: bool,
 }
 
 #[tokio::main(flavor = "multi_thread")]
