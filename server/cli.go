@@ -8,9 +8,18 @@ import (
 
 func init() {
 	runCmd.Flags().IntVarP(&port, "port", "p", 1080, "Port to listen on")
+	runCmd.Flags().BoolVar(&useTLS, "tls", false, "Use TLS for connections")
+	runCmd.Flags().BoolVar(&useTor, "tor", false, "Use Tor for connections")
+	runCmd.MarkFlagsMutuallyExclusive("tls", "tor")
+
 	startCmd.Flags().IntVarP(&port, "port", "p", 1080, "Port to listen on")
+	startCmd.Flags().BoolVar(&useTLS, "tls", false, "Use TLS for connections")
+	startCmd.Flags().BoolVar(&useTor, "tor", false, "Use Tor for connections")
+	startCmd.MarkFlagsMutuallyExclusive("tls", "tor")
+
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(stopCmd)
 }
 
 func main() {
@@ -40,5 +49,14 @@ var startCmd = &cobra.Command{
 	Long:  `Start the reverse SOCKS5 proxy server and listen for incoming agent connections in background.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return startServer(args)
+	},
+}
+
+var stopCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "Stop the proxy server running in background",
+	Long:  `Stop the reverse SOCKS5 proxy server that was started in background mode.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return stopServer()
 	},
 }

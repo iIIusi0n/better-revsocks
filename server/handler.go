@@ -1,11 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net"
-	"os"
 	"reflect"
 	"time"
 
@@ -15,6 +13,8 @@ import (
 var (
 	MagicBytes = []byte{0x1b, 0xc3, 0xbd, 0x0f}
 	port       int
+	useTLS     bool
+	useTor     bool
 )
 
 type ConnectionHandler struct {
@@ -166,47 +166,5 @@ func validateMagicBytes(conn net.Conn) error {
 		return io.EOF
 	}
 	log.Printf("Magic bytes validated successfully")
-	return nil
-}
-
-func runServer() error {
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		return fmt.Errorf("failed to create main listener: %v", err)
-	}
-	defer listener.Close()
-
-	log.Printf("Server started, listening on %s for agents", listener.Addr().String())
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Printf("Error accepting connection: %s", err)
-			continue
-		}
-
-		log.Printf("New connection from %v", conn.RemoteAddr())
-		if err := validateMagicBytes(conn); err != nil {
-			log.Printf("Magic bytes validation failed for %v: %s", conn.RemoteAddr(), err)
-			conn.Close()
-			continue
-		}
-
-		go handleConnection(conn)
-	}
-}
-
-func startServer(args []string) error {
-	procArgs := []string{os.Args[0], "run"}
-	procArgs = append(procArgs, "-p", fmt.Sprintf("%d", port))
-	procArgs = append(procArgs, args...)
-
-	proc, err := os.StartProcess(os.Args[0], procArgs, &os.ProcAttr{
-		Files: []*os.File{nil, nil, nil},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to start daemon process: %v", err)
-	}
-	log.Printf("Started daemon process with PID %d", proc.Pid)
 	return nil
 }
