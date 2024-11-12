@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"reflect"
 	"time"
 
@@ -168,7 +169,7 @@ func validateMagicBytes(conn net.Conn) error {
 	return nil
 }
 
-func startServer() error {
+func runServer() error {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return fmt.Errorf("failed to create main listener: %v", err)
@@ -193,4 +194,19 @@ func startServer() error {
 
 		go handleConnection(conn)
 	}
+}
+
+func startServer(args []string) error {
+	procArgs := []string{os.Args[0], "run"}
+	procArgs = append(procArgs, "-p", fmt.Sprintf("%d", port))
+	procArgs = append(procArgs, args...)
+
+	proc, err := os.StartProcess(os.Args[0], procArgs, &os.ProcAttr{
+		Files: []*os.File{nil, nil, nil},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start daemon process: %v", err)
+	}
+	log.Printf("Started daemon process with PID %d", proc.Pid)
+	return nil
 }

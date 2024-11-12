@@ -7,7 +7,9 @@ import (
 )
 
 func init() {
+	runCmd.Flags().IntVarP(&port, "port", "p", 1080, "Port to listen on")
 	startCmd.Flags().IntVarP(&port, "port", "p", 1080, "Port to listen on")
+	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(startCmd)
 }
 
@@ -23,11 +25,20 @@ var rootCmd = &cobra.Command{
 	Long:  `A server component of the reverse SOCKS5 proxy system that accepts connections from agents.`,
 }
 
+var runCmd = &cobra.Command{
+	Use:   "run",
+	Short: "Start the proxy server in foreground",
+	Long:  `Start the reverse SOCKS5 proxy server and listen for incoming agent connections in foreground.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runServer()
+	},
+}
+
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start the proxy server",
-	Long:  `Start the reverse SOCKS5 proxy server and listen for incoming agent connections.`,
+	Short: "Start the proxy server in background",
+	Long:  `Start the reverse SOCKS5 proxy server and listen for incoming agent connections in background.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return startServer()
+		return startServer(args)
 	},
 }
