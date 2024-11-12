@@ -5,7 +5,7 @@ Rust for client, Golang for server.
 ### TODO
 - [x] Multiplexing using Yamux
 - [x] Agent connection health check
-- [ ] TLS support
+- [x] TLS support
 - [ ] Tor support with Arti (experimental)
 - [x] Rich CLI with daemon
 

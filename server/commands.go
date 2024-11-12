@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -15,7 +16,17 @@ func runServer() error {
 		}
 	}()
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	var listener net.Listener
+	var err error
+	if useTLS {
+		tlsConfig, err := generateTLSConfig()
+		if err != nil {
+			return fmt.Errorf("failed to generate TLS config: %v", err)
+		}
+		listener, err = tls.Listen("tcp", fmt.Sprintf(":%d", port), tlsConfig)
+	} else {
+		listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
+	}
 	if err != nil {
 		return fmt.Errorf("failed to create main listener: %v", err)
 	}

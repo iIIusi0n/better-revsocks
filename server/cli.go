@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -77,13 +76,11 @@ var lsCmd = &cobra.Command{
 }
 
 var closeCmd = &cobra.Command{
-	Use:   "close",
+	Use:   "close <id>",
 	Short: "Close a connection by ID",
 	Long:  `Close a connection by its ID.`,
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return fmt.Errorf("connection ID is required")
-		}
 		return closeConnection(args[0])
 	},
 }

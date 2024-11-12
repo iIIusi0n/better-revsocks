@@ -1,10 +1,17 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
 	"hash/crc32"
 	"io"
 	"log"
+	"math/big"
 	"net"
 	"reflect"
 	"time"
@@ -60,13 +67,17 @@ func NewConnectionHandler(conn net.Conn) *ConnectionHandler {
 }
 
 func (h *ConnectionHandler) setupListener() error {
-	listener, err := net.Listen("tcp", ":0")
+	var listener net.Listener
+	var err error
+
+	listener, err = net.Listen("tcp", ":0")
 	if err != nil {
-		log.Printf("Failed to create TCP listener: %v", err)
+		log.Printf("Failed to create listener: %v", err)
 		return err
 	}
+
 	h.socksClientListener = listener
-	log.Printf("SOCKS listener started on %s", listener.Addr().String())
+	log.Printf("Listener started on %s (TLS: %v)", listener.Addr().String(), useTLS)
 	return nil
 }
 
@@ -193,4 +204,43 @@ func generateConnectionID(conn net.Conn) string {
 	h := crc32.NewIEEE()
 	h.Write([]byte(ip.String()))
 	return fmt.Sprintf("%x", h.Sum32())
+}
+
+func generateTLSConfig() (*tls.Config, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate private key: %v", err)
+	}
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Self-Signed Cert"},
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(365 * 24 * time.Hour),
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create certificate: %v", err)
+	}
+
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+
+	tlsCert, err := tls.X509KeyPair(certPEM, privateKeyPEM)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TLS certificate: %v", err)
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	}, nil
 }
