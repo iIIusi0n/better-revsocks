@@ -4,10 +4,10 @@ use tokio_util::compat::{TokioAsyncReadCompatExt, FuturesAsyncReadCompatExt};
 use yamux::{Config as YamuxConfig, Connection, Mode};
 use tokio_native_tls::TlsConnector;
 use log::{info, error};
+use crate::socks::SocksServer;
 
 use crate::config::Config;
 use crate::error::Result;
-use crate::socks::SOCKClient;
 
 const MAGIC_BYTES: [u8; 4] = [0x1b, 0xc3, 0xbd, 0x0f];
 
@@ -60,8 +60,8 @@ impl ReverseProxyClient {
             };
 
             tokio::spawn(async move {
-                let mut client = SOCKClient::new_no_auth(stream.compat(), None);
-                match client.init().await {
+                let mut client = SocksServer::new(stream.compat());
+                match client.handle().await {
                     Ok(_) => info!("client connected"),
                     Err(e) => error!("client error: {:?}", e),
                 }

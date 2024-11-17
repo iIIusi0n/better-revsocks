@@ -7,7 +7,6 @@ use crate::config::Config;
 use crate::client::ReverseProxyClient;
 use crate::error::Result;
 
-use log::info;
 use clap::Parser;
 
 #[tokio::main(flavor = "multi_thread")]
