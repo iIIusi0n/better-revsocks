@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,10 +23,15 @@ func NewDaemonService() *DaemonService {
 }
 
 func (d *DaemonService) Start() error {
+	sockPath := filepath.Join(os.TempDir(), "better-revsocks.sock")
+	if err := os.Remove(sockPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to remove existing socket file: %v", err)
+	}
+
 	var err error
-	d.listener, err = net.Listen("tcp", "127.0.0.1:9191")
+	d.listener, err = net.Listen("unix", sockPath)
 	if err != nil {
-		return fmt.Errorf("failed to listen on port 9191: %v", err)
+		return fmt.Errorf("failed to listen on socket %s: %v", sockPath, err)
 	}
 
 	d.setupRoutes()

@@ -7,6 +7,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -19,7 +21,8 @@ func NewDaemonClient() *Client {
 		client: &http.Client{
 			Transport: &http.Transport{
 				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-					return net.Dial("tcp", "127.0.0.1:9191")
+					sockPath := filepath.Join(os.TempDir(), "better-revsocks.sock")
+					return net.Dial("unix", sockPath)
 				},
 			},
 		},
@@ -27,7 +30,7 @@ func NewDaemonClient() *Client {
 }
 
 func (c *Client) call(method, path string, body io.Reader) ([]byte, error) {
-	path = "http://127.0.0.1:9191" + path
+	path = "http://revsocks" + path
 	req, err := http.NewRequest(method, path, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
